@@ -1,0 +1,61 @@
+{% extends "base/layout.html" %}
+{% block title %}المواد والمخزون{% endblock %}
+{% block page_title %}المواد والمخزون{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-boxes"></i> المواد والمخزون</h4>
+    <div class="d-flex gap-2">
+        <a href="/materials/add" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة مادة</a>
+        <a href="/materials/bulk-add" class="btn btn-outline-primary"><i class="bi bi-collection"></i> إضافة جماعية</a>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>الاسم</th>
+                    <th>الفئة</th>
+                    <th>الوحدة</th>
+                    <th>المخزون الحالي</th>
+                    <th>مخزون عام؟</th>
+                    <th>الحامل الحالي</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in materials %}
+                <tr>
+                    <td><strong>{{ m.item_code or '—' }}</strong></td>
+                    <td><a href="/materials/{{ m.id }}">{{ m.name }}</a></td>
+                    <td>
+                        {% if m.category.value == 'cable' %}<span class="badge bg-info">كابل</span>
+                        {% elif m.category.value == 'consumable' %}<span class="badge bg-secondary">مستهلك</span>
+                        {% elif m.category.value == 'device' %}<span class="badge bg-primary">معدة</span>
+                        {% else %}<span class="badge bg-dark">عدة</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if m.unit.value == 'meters' %}متر
+                        {% elif m.unit.value == 'units' %}وحدة
+                        {% else %}قطعة{% endif %}
+                    </td>
+                    <td>
+                        <strong class="{% if m.current_stock < 10 %}text-danger{% endif %}">{{ m.current_stock }}</strong>
+                    </td>
+                    <td>{% if m.is_general_stock %}<i class="bi bi-check-circle text-success"></i>{% else %}—{% endif %}</td>
+                    <td>{{ m.holder.full_name if m.holder else '—' }}</td>
+                    <td>
+                        <a href="/materials/{{ m.id }}" class="btn btn-sm btn-outline-primary">عرض</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">لا توجد مواد مسجلة</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

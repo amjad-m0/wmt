@@ -1,0 +1,38 @@
+{% extends "base/layout.html" %}
+{% block title %}تعديل مورد{% endblock %}
+{% block page_title %}تعديل مورد{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-pencil"></i> تعديل: {{ supplier.name }}</h4>
+    <a href="/suppliers/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="form-card" style="max-width: 600px;">
+    <form method="post" action="/suppliers/{{ supplier.id }}/edit">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">اسم المورد / الشركة <span class="required-star">*</span></label>
+                <input type="text" name="name" class="form-control" value="{{ supplier.name }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">الشخص المسؤول <span class="required-star">*</span></label>
+                <input type="text" name="contact_person" class="form-control" value="{{ supplier.contact_person }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">رقم الهاتف <span class="required-star">*</span></label>
+                <input type="text" name="phone" class="form-control" value="{{ supplier.phone }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">تاريخ توقيع الاتفاق</label>
+                <input type="date" name="agreement_date" class="form-control" value="{{ supplier.agreement_date.strftime('%Y-%m-%d') if supplier.agreement_date else '' }}">
+            </div>
+            <div class="col-12">
+                <label class="form-label">ملاحظات</label>
+                <textarea name="notes" class="form-control" rows="2">{{ supplier.notes or '' }}</textarea>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-4"><i class="bi bi-check-lg"></i> حفظ التعديلات</button>
+    </form>
+</div>
+{% endblock %}

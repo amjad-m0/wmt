@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة المستودع{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+
+{% if current_user %}
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <i class="bi bi-box-seam fs-3 text-white"></i>
+        <span class="sidebar-title">إدارة المستودع</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i> لوحة التحكم
+        </a>
+        <div class="nav-section">المواد</div>
+        <a href="/materials/" class="nav-link {% if '/materials' in request.url.path %}active{% endif %}">
+            <i class="bi bi-boxes"></i> المواد والمخزون
+        </a>
+        <a href="/suppliers/" class="nav-link {% if '/suppliers' in request.url.path %}active{% endif %}">
+            <i class="bi bi-truck"></i> الموردين
+        </a>
+        <div class="nav-section">الأوامر</div>
+        <a href="/orders/" class="nav-link {% if '/orders' in request.url.path %}active{% endif %}">
+            <i class="bi bi-file-earmark-text"></i> أوامر الشغل والصيانة
+        </a>
+        <a href="/issuances/" class="nav-link {% if '/issuances' in request.url.path %}active{% endif %}">
+            <i class="bi bi-box-arrow-up"></i> الإصدار والصرف
+        </a>
+        <div class="nav-section">العمليات</div>
+        <a href="/borrowings/" class="nav-link {% if '/borrowings' in request.url.path %}active{% endif %}">
+            <i class="bi bi-arrow-left-right"></i> الاستلاف
+        </a>
+        <a href="/transfers/" class="nav-link {% if '/transfers' in request.url.path %}active{% endif %}">
+            <i class="bi bi-shuffle"></i> النقل الداخلي
+        </a>
+        <a href="/returns/" class="nav-link {% if '/returns' in request.url.path %}active{% endif %}">
+            <i class="bi bi-arrow-return-right"></i> المرتجعات
+        </a>
+        <div class="nav-section">البحث والتقارير</div>
+        <a href="/search/" class="nav-link {% if '/search' in request.url.path %}active{% endif %}">
+            <i class="bi bi-search"></i> البحث في السجلات
+        </a>
+        {% if current_user.role.value == 'admin' %}
+        <a href="/search/audit" class="nav-link">
+            <i class="bi bi-clock-history"></i> سجل التغييرات
+        </a>
+        <div class="nav-section">الإدارة</div>
+        <a href="/admin/users" class="nav-link {% if '/admin' in request.url.path %}active{% endif %}">
+            <i class="bi bi-people"></i> إدارة المستخدمين
+        </a>
+        {% endif %}
+    </nav>
+    <div class="sidebar-footer">
+        <span class="text-white-50 small">{{ current_user.full_name }}</span>
+        <a href="/auth/logout" class="btn btn-sm btn-outline-light mt-1">
+            <i class="bi bi-box-arrow-left"></i> خروج
+        </a>
+    </div>
+</div>
+
+<!-- Main content -->
+<div class="main-content" id="mainContent">
+    <div class="topbar">
+        <button class="btn btn-sm btn-outline-secondary" id="sidebarToggle">
+            <i class="bi bi-list"></i>
+        </button>
+        <h6 class="mb-0 text-muted">{% block page_title %}{% endblock %}</h6>
+        <span class="badge bg-primary">{{ current_user.role.value == 'admin' and 'مدير' or 'مشرف' }}</span>
+    </div>
+
+    <div class="page-content">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+{% else %}
+    {% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('mainContent').classList.toggle('expanded');
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

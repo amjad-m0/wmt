@@ -1,0 +1,118 @@
+{% extends "base/layout.html" %}
+{% block title %}أمر جديد{% endblock %}
+{% block page_title %}إضافة أمر جديد{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-plus-circle"></i> إضافة أمر جديد</h4>
+    <a href="/orders/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="form-card" style="max-width: 750px;">
+    {% if error %}
+    <div class="alert alert-danger py-2 small">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/orders/add" enctype="multipart/form-data">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">رقم الأمر <span class="required-star">*</span></label>
+                <input type="text" name="order_number" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">نوع الأمر <span class="required-star">*</span></label>
+                <select name="order_type" class="form-select" id="orderType" required>
+                    <option value="work_order">أمر شغل (يتطلب Gate Pass)</option>
+                    <option value="maintenance_order">أمر صيانة (بدون Gate Pass)</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">المستودع المصدر (شركة الكهرباء)</label>
+                <select name="supplier_id" class="form-select">
+                    <option value="">— بدون تحديد —</option>
+                    {% for sup in suppliers %}
+                    <option value="{{ sup.id }}">{{ sup.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">المشرف المستلم</label>
+                <input type="text" class="form-control" value="{{ current_user.full_name }}" disabled>
+                <div class="form-text">بيتسجل تلقائي باسم المستخدم اللي مسجل دخول دلوقتي.</div>
+            </div>
+            <div class="col-md-6" id="driverField">
+                <label class="form-label">اسم السائق <span class="required-star">*</span></label>
+                <input type="text" name="driver_name" class="form-control">
+            </div>
+            <div class="col-12">
+                <label class="form-label">ملاحظات</label>
+                <textarea name="notes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+
+        <div id="workOrderFields">
+            <hr class="my-4">
+            <h6 class="mb-3"><i class="bi bi-qr-code"></i> بيانات Gate Pass الأولى</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">كود Gate Pass <span class="required-star">*</span></label>
+                    <input type="text" name="gate_pass_code" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">صورة وثيقة الوصل <span class="required-star">*</span></label>
+                    <input type="file" name="document_photo" class="form-control" accept="image/*">
+                </div>
+            </div>
+
+            <hr class="my-3">
+            <h6 class="mb-2"><i class="bi bi-boxes"></i> المواد اللي جاية مع الـ Gate Pass ده</h6>
+            <p class="text-muted small">أضف كل مادة وكميتها اللي وصلت مع هذا الأمر. تقدر تضيف أكتر من مادة.</p>
+            <div id="materialRows"></div>
+            <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addRowBtn">
+                <i class="bi bi-plus-lg"></i> إضافة مادة
+            </button>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-4"><i class="bi bi-check-lg"></i> حفظ الأمر</button>
+    </form>
+</div>
+
+<template id="rowTemplate">
+    <div class="row g-2 align-items-center mb-2 material-row">
+        <div class="col-7">
+            <select name="gp_material_id" class="form-select form-select-sm">
+                <option value="">اختر المادة...</option>
+                {% for m in materials %}
+                <option value="{{ m.id }}">{{ m.name }} ({{ m.unit.value }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-3">
+            <input type="number" step="0.01" name="gp_quantity" class="form-control form-control-sm" placeholder="الكمية">
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn"><i class="bi bi-trash"></i></button>
+        </div>
+    </div>
+</template>
+
+<script>
+document.getElementById('orderType').addEventListener('change', function() {
+    const isWorkOrder = this.value === 'work_order';
+    document.getElementById('workOrderFields').style.display = isWorkOrder ? 'block' : 'none';
+    document.querySelector('input[name="gate_pass_code"]').required = isWorkOrder;
+    document.querySelector('input[name="document_photo"]').required = isWorkOrder;
+    document.querySelector('input[name="driver_name"]').required = isWorkOrder;
+});
+
+function addMaterialRow() {
+    const tpl = document.getElementById('rowTemplate');
+    const clone = tpl.content.cloneNode(true);
+    clone.querySelector('.remove-row-btn').addEventListener('click', function() {
+        this.closest('.material-row').remove();
+    });
+    document.getElementById('materialRows').appendChild(clone);
+}
+document.getElementById('addRowBtn').addEventListener('click', addMaterialRow);
+addMaterialRow(); // ابدأ بصف واحد جاهز
+</script>
+{% endblock %}

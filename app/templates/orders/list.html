@@ -1,0 +1,54 @@
+{% extends "base/layout.html" %}
+{% block title %}الأوامر{% endblock %}
+{% block page_title %}أوامر الشغل والصيانة{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-file-earmark-text"></i> أوامر الشغل والصيانة</h4>
+    <a href="/orders/add" class="btn btn-primary"><i class="bi bi-plus-lg"></i> أمر جديد</a>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الكود التسلسلي</th>
+                    <th>رقم الأمر</th>
+                    <th>النوع</th>
+                    <th>الحالة</th>
+                    <th>المشرف المستلم</th>
+                    <th>السائق</th>
+                    <th>التاريخ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td class="small"><code>{{ o.reference_code or '—' }}</code></td>
+                    <td><a href="/orders/{{ o.id }}"><strong>{{ o.order_number }}</strong></a></td>
+                    <td>
+                        {% if o.order_type.value == 'work_order' %}
+                        <span class="badge bg-primary">أمر شغل</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">أمر صيانة</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-info">{{ o.status.value }}</span></td>
+                    <td>{{ o.receiving_supervisor.full_name if o.receiving_supervisor else '—' }}</td>
+                    <td>{{ o.driver_name or '—' }}</td>
+                    <td class="small text-muted">{{ o.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <a href="/orders/{{ o.id }}" class="btn btn-sm btn-outline-primary">عرض</a>
+                        <a href="/orders/{{ o.id }}/receipt" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i></a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">لا توجد أوامر مسجلة</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

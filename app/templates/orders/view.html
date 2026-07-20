@@ -1,0 +1,227 @@
+{% extends "base/layout.html" %}
+{% block title %}{{ order.order_number }}{% endblock %}
+{% block page_title %}تفاصيل الأمر{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4>
+        <i class="bi bi-file-earmark-text"></i> {{ order.order_number }}
+        {% if order.order_type.value == 'work_order' %}
+        <span class="badge bg-primary">أمر شغل</span>
+        {% else %}
+        <span class="badge bg-warning text-dark">أمر صيانة</span>
+        {% endif %}
+        {% if order.status.value == 'closed' %}
+        <span class="badge bg-dark">مغلق</span>
+        {% else %}
+        <span class="badge bg-success">مفتوح</span>
+        {% endif %}
+    </h4>
+    <div class="d-flex gap-2">
+        <a href="/orders/{{ order.id }}/receipt" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-printer"></i> طباعة الوصل</a>
+        {% if order.status.value != 'closed' %}
+        <form method="post" action="/orders/{{ order.id }}/close" onsubmit="return confirm('إغلاق هذا الأمر؟')">
+            <button type="submit" class="btn btn-outline-dark"><i class="bi bi-lock"></i> إغلاق الأمر</button>
+        </form>
+        {% elif current_user.role.value == 'admin' %}
+        <form method="post" action="/orders/{{ order.id }}/reopen">
+            <button type="submit" class="btn btn-outline-success"><i class="bi bi-unlock"></i> إعادة فتح</button>
+        </form>
+        {% endif %}
+        {% if current_user.role.value == 'admin' %}
+        <form method="post" action="/orders/{{ order.id }}/delete" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i> حذف</button>
+        </form>
+        {% endif %}
+        <a href="/orders/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="form-card mb-3">
+            <table class="table table-borderless">
+                <tr><th width="200">الكود التسلسلي</th><td><code>{{ order.reference_code or '—' }}</code></td></tr>
+                <tr><th>الحالة</th><td>
+                    {% if order.status.value == 'closed' %}<span class="badge bg-dark">مغلق — خلص</span>
+                    {% else %}<span class="badge bg-success">مفتوح — لسه شغال</span>{% endif %}
+                </td></tr>
+                <tr><th>المشرف المستلم</th><td>{{ order.receiving_supervisor.full_name if order.receiving_supervisor else '—' }}</td></tr>
+                <tr><th>المستودع المصدر</th><td>{{ order.supplier.name if order.supplier else '—' }}</td></tr>
+                <tr><th>المشرف المُصدِر</th><td>{{ order.issuing_supervisor.full_name if order.issuing_supervisor else '— لم يُصدَر بعد —' }}</td></tr>
+                <tr><th>السائق</th><td>{{ order.driver_name or '—' }}</td></tr>
+                <tr><th>ملاحظات</th><td>{{ order.notes or '—' }}</td></tr>
+                <tr><th>تاريخ الإنشاء</th><td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+            </table>
+        </div>
+
+        <!-- حالة المواد المسجلة على هذا الأمر -->
+        <div class="table-card mb-3">
+            <div class="table-card-header">
+                <h6><i class="bi bi-boxes"></i> المواد المسجلة على هذا الأمر</h6>
+                <a href="/orders/{{ order.id }}/materials-receipt" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-printer"></i> طباعة
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>كود الصنف</th><th>المادة</th><th>الرقم التسلسلي</th><th>الوارد (Gate Pass)</th><th>الصادر (إصدار)</th><th>المتبقي بالمخزن</th><th>الحالة</th></tr></thead>
+                    <tbody>
+                        {% for ms in materials_status %}
+                        <tr>
+                            <td>{{ ms.item_code or '—' }}</td>
+                            <td>{{ ms.name }}</td>
+                            <td class="small">{{ ms.serial_number or '—' }}</td>
+                            <td>{{ ms.received }} {{ ms.unit }}</td>
+                            <td>{{ ms.issued }} {{ ms.unit }}</td>
+                            <td><strong>{{ ms.remaining }} {{ ms.unit }}</strong></td>
+                            <td>
+                                {% if ms.status == 'خرجت بالكامل' %}
+                                <span class="badge bg-secondary">{{ ms.status }}</span>
+                                {% elif ms.status == 'خرج جزء منها' %}
+                                <span class="badge bg-warning text-dark">{{ ms.status }}</span>
+                                {% else %}
+                                <span class="badge bg-success">{{ ms.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-3">لا توجد مواد مسجلة على هذا الأمر بعد</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if order.order_type.value == 'work_order' %}
+        <div class="table-card mb-3">
+            <div class="table-card-header">
+                <h6><i class="bi bi-qr-code"></i> سجلات Gate Pass</h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addGatePassModal">
+                    <i class="bi bi-plus-lg"></i> إضافة Gate Pass
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>الكود التسلسلي</th><th>كود Gate Pass</th><th>السائق</th><th>المشرف</th><th>التاريخ</th><th>المواد</th><th>الوثيقة</th></tr></thead>
+                    <tbody>
+                        {% for gp in order.gate_passes %}
+                        <tr>
+                            <td class="small"><code>{{ gp.reference_code or '—' }}</code></td>
+                            <td>{{ gp.gate_pass_code }}</td>
+                            <td>{{ gp.driver_name }}</td>
+                            <td>{{ gp.receiving_supervisor.full_name if gp.receiving_supervisor else '—' }}</td>
+                            <td class="small">{{ gp.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="small">
+                                {% for gpm in gp.materials %}
+                                {{ gpm.material.name }} (كمية: {{ gpm.quantity }}{% if gpm.material.serial_number %}, رقم تسلسلي: {{ gpm.material.serial_number }}{% endif %}){% if not loop.last %}<br>{% endif %}
+                                {% else %}—{% endfor %}
+                            </td>
+                            <td>
+                                {% if gp.document_photo_url %}
+                                <a href="{{ gp.document_photo_url }}" target="_blank"><i class="bi bi-image"></i> عرض</a>
+                                {% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-3">لا توجد سجلات</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-card">
+            <h6 class="mb-3">إجراءات سريعة</h6>
+            <a href="/issuances/add?order_id={{ order.id }}" class="btn btn-outline-primary w-100 mb-2">
+                <i class="bi bi-box-arrow-up"></i> إصدار مواد لهذا الأمر
+            </a>
+            <a href="/borrowings/add?order_id={{ order.id }}" class="btn btn-outline-primary w-100 mb-2">
+                <i class="bi bi-arrow-left-right"></i> استلاف لهذا الأمر
+            </a>
+            <a href="/returns/add?order_id={{ order.id }}" class="btn btn-outline-primary w-100">
+                <i class="bi bi-arrow-return-right"></i> مرتجع لهذا الأمر
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if order.order_type.value == 'work_order' %}
+<!-- Add Gate Pass Modal -->
+<div class="modal fade" id="addGatePassModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="/orders/{{ order.id }}/add-gate-pass" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">إضافة Gate Pass جديد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">كود Gate Pass <span class="required-star">*</span></label>
+                        <input type="text" name="gate_pass_code" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم السائق <span class="required-star">*</span></label>
+                        <input type="text" name="driver_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">المشرف المستلم</label>
+                        <input type="text" class="form-control" value="{{ current_user.full_name }}" disabled>
+                        <div class="form-text">بيتسجل تلقائي باسم المستخدم اللي مسجل دخول دلوقتي.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">صورة وثيقة الوصل <span class="required-star">*</span></label>
+                        <input type="file" name="document_photo" class="form-control" accept="image/*" required>
+                    </div>
+                    <hr>
+                    <h6 class="mb-2"><i class="bi bi-boxes"></i> المواد اللي جاية مع الـ Gate Pass ده</h6>
+                    <div id="modalMaterialRows"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="modalAddRowBtn">
+                        <i class="bi bi-plus-lg"></i> إضافة مادة
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<template id="modalRowTemplate">
+    <div class="row g-2 align-items-center mb-2 modal-material-row">
+        <div class="col-7">
+            <select name="gp_material_id" class="form-select form-select-sm">
+                <option value="">اختر المادة...</option>
+                {% for m in materials %}
+                <option value="{{ m.id }}">{{ m.name }} ({{ m.unit.value }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-3">
+            <input type="number" step="0.01" name="gp_quantity" class="form-control form-control-sm" placeholder="الكمية">
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-sm btn-outline-danger modal-remove-row-btn"><i class="bi bi-trash"></i></button>
+        </div>
+    </div>
+</template>
+
+<script>
+function addModalMaterialRow() {
+    const tpl = document.getElementById('modalRowTemplate');
+    const clone = tpl.content.cloneNode(true);
+    clone.querySelector('.modal-remove-row-btn').addEventListener('click', function() {
+        this.closest('.modal-material-row').remove();
+    });
+    document.getElementById('modalMaterialRows').appendChild(clone);
+}
+document.getElementById('modalAddRowBtn').addEventListener('click', addModalMaterialRow);
+addModalMaterialRow();
+</script>
+{% endif %}
+{% endblock %}

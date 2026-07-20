@@ -1,0 +1,45 @@
+{% extends "base/layout.html" %}
+{% block title %}سجل التغييرات{% endblock %}
+{% block page_title %}سجل التغييرات (Audit Log){% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-clock-history"></i> سجل التغييرات</h4>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الإجراء</th>
+                    <th>النوع</th>
+                    <th>رقم السجل</th>
+                    <th>المستخدم</th>
+                    <th>الوصف</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        {% if log.action.value == 'create' %}<span class="badge bg-success">إضافة</span>
+                        {% elif log.action.value == 'edit' %}<span class="badge bg-warning text-dark">تعديل</span>
+                        {% elif log.action.value == 'delete' %}<span class="badge bg-danger">حذف</span>
+                        {% else %}<span class="badge bg-info">استعادة</span>{% endif %}
+                    </td>
+                    <td>{{ log.entity_type }}</td>
+                    <td>#{{ log.entity_id }}</td>
+                    <td>{{ log.user.full_name }}</td>
+                    <td class="small">{{ log.description or '—' }}</td>
+                    <td class="small text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">لا توجد سجلات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

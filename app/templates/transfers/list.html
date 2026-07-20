@@ -1,0 +1,52 @@
+{% extends "base/layout.html" %}
+{% block title %}النقل الداخلي{% endblock %}
+{% block page_title %}النقل الداخلي{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-shuffle"></i> النقل الداخلي</h4>
+    <a href="/transfers/add" class="btn btn-primary"><i class="bi bi-plus-lg"></i> نقل جديد</a>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>المادة</th>
+                    <th>الكمية</th>
+                    <th>المشرف</th>
+                    <th>من موقع</th>
+                    <th>إلى موقع</th>
+                    <th>التاريخ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transfers %}
+                <tr>
+                    <td class="small"><code>{{ t.reference_code or '—' }}</code></td>
+                    <td>{{ t.material.name }}</td>
+                    <td>{{ t.quantity }} {{ t.material.unit.value }}</td>
+                    <td>{{ t.supervisor.full_name }}</td>
+                    <td>{{ t.location_from }}</td>
+                    <td>{{ t.location_to }}</td>
+                    <td class="small text-muted">{{ t.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="/transfers/{{ t.id }}/receipt" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i></a>
+                        {% if current_user.role.value == 'admin' %}
+                        <form method="post" action="/transfers/{{ t.id }}/delete" class="d-inline" onsubmit="return confirm('حذف السجل؟')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">لا توجد عمليات نقل</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

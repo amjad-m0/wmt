@@ -1,0 +1,135 @@
+{% extends "base/layout.html" %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block page_title %}لوحة التحكم{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-speedometer2"></i> لوحة التحكم</h4>
+    <span class="text-muted small">{{ today }}</span>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#EEF4FB; color:#1F5C99;">
+                    <i class="bi bi-boxes"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.materials_count }}</div>
+                    <div class="stat-label">مادة مسجلة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eafaf1; color:#27ae60;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.orders_open }}</div>
+                    <div class="stat-label">أوامر مفتوحة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fef5e7; color:#f39c12;">
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.borrowings_pending }}</div>
+                    <div class="stat-label">استلاف معلّق</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fdedec; color:#e74c3c;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.low_stock }}</div>
+                    <div class="stat-label">مخزون منخفض</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h6><i class="bi bi-file-earmark-text"></i> آخر الأوامر</h6>
+                <a href="/orders/" class="small">عرض الكل</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>رقم الأمر</th><th>النوع</th><th>الحالة</th></tr></thead>
+                    <tbody>
+                        {% for o in recent_orders %}
+                        <tr>
+                            <td><a href="/orders/{{ o.id }}">{{ o.order_number }}</a></td>
+                            <td>{{ 'أمر شغل' if o.order_type.value == 'work_order' else 'أمر صيانة' }}</td>
+                            <td><span class="badge bg-info">{{ o.status.value }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">لا توجد أوامر</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h6><i class="bi bi-arrow-left-right"></i> آخر عمليات الاستلاف</h6>
+                <a href="/borrowings/" class="small">عرض الكل</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>المادة</th><th>الكمية</th><th>الحالة</th></tr></thead>
+                    <tbody>
+                        {% for b in recent_borrowings %}
+                        <tr>
+                            <td>{{ b.material.name }}</td>
+                            <td>{{ b.quantity }}</td>
+                            <td>
+                                {% if b.status.value == 'returned' %}
+                                <span class="badge bg-success">مُرجَع</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">معلّق</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">لا توجد عمليات</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-12">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/orders/add" class="btn btn-primary"><i class="bi bi-plus-lg"></i> أمر جديد</a>
+            <a href="/issuances/add" class="btn btn-outline-primary"><i class="bi bi-box-arrow-up"></i> إصدار مواد</a>
+            <a href="/borrowings/add" class="btn btn-outline-primary"><i class="bi bi-arrow-left-right"></i> استلاف</a>
+            <a href="/transfers/add" class="btn btn-outline-primary"><i class="bi bi-shuffle"></i> نقل داخلي</a>
+            <a href="/returns/add" class="btn btn-outline-primary"><i class="bi bi-arrow-return-right"></i> مرتجع</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

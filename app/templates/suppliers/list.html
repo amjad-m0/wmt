@@ -1,0 +1,46 @@
+{% extends "base/layout.html" %}
+{% block title %}الموردين{% endblock %}
+{% block page_title %}الموردين والتعاقدات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-truck"></i> الموردين والتعاقدات</h4>
+    <a href="/suppliers/add" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة مورد</a>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>اسم المورد</th>
+                    <th>الشخص المسؤول</th>
+                    <th>الهاتف</th>
+                    <th>تاريخ الاتفاق</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in suppliers %}
+                <tr>
+                    <td><strong>{{ s.name }}</strong></td>
+                    <td>{{ s.contact_person }}</td>
+                    <td>{{ s.phone }}</td>
+                    <td class="small text-muted">{{ s.agreement_date.strftime('%Y-%m-%d') if s.agreement_date else '—' }}</td>
+                    <td>
+                        {% if current_user.role.value == 'admin' %}
+                        <a href="/suppliers/{{ s.id }}/edit" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="/suppliers/{{ s.id }}/delete" class="d-inline" onsubmit="return confirm('حذف المورد؟')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">لا يوجد موردين مسجلين</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

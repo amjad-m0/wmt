@@ -1,0 +1,79 @@
+{% extends "base/layout.html" %}
+{% block title %}الاستلاف{% endblock %}
+{% block page_title %}الاستلاف بين الأوامر{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-arrow-left-right"></i> الاستلاف بين الأوامر</h4>
+    <a href="/borrowings/add" class="btn btn-primary"><i class="bi bi-plus-lg"></i> استلاف جديد</a>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>النوع</th>
+                    <th>أمر العمل</th>
+                    <th>المصدر / الجهة</th>
+                    <th>المادة</th>
+                    <th>الكمية</th>
+                    <th>مشرف الاستلاف</th>
+                    <th>الحالة</th>
+                    <th>التاريخ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in borrowings %}
+                <tr>
+                    <td class="small"><code>{{ b.reference_code or '—' }}</code></td>
+                    <td class="small">
+                        {% if b.direction.value == 'lend_out' %}
+                        <span class="badge bg-warning text-dark">تسليف لمقاول</span>
+                        {% elif b.source_type.value == 'contractor' %}
+                        <span class="badge bg-info">استلاف من مقاول</span>
+                        {% else %}
+                        <span class="badge bg-secondary">استلاف داخلي</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="/orders/{{ b.borrowing_order.id }}">{{ b.borrowing_order.order_number }}</a></td>
+                    <td>
+                        {% if b.source_type.value == 'contractor' %}
+                        {{ b.contractor_name }}
+                        {% else %}
+                        {{ b.source_order.order_number if b.source_order else '—' }}
+                        {% endif %}
+                    </td>
+                    <td>{{ b.material.name }}</td>
+                    <td>{{ b.quantity }} {{ b.material.unit.value }}</td>
+                    <td>{{ b.supervisor.full_name }}</td>
+                    <td>
+                        {% if b.status.value == 'returned' %}
+                        <span class="badge bg-success">مُرجَع</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">معلّق</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {% if b.status.value == 'pending' %}
+                        <a href="/borrowings/{{ b.id }}/return" class="btn btn-sm btn-outline-success">إرجاع</a>
+                        {% endif %}
+                        <a href="/borrowings/{{ b.id }}/receipt" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i></a>
+                        {% if current_user.role.value == 'admin' %}
+                        <form method="post" action="/borrowings/{{ b.id }}/delete" class="d-inline" onsubmit="return confirm('حذف السجل؟')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="text-center text-muted py-4">لا توجد عمليات استلاف</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

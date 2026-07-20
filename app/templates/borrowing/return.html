@@ -1,0 +1,57 @@
+{% extends "base/layout.html" %}
+{% block title %}رد استلاف{% endblock %}
+{% block page_title %}رد استلاف{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-arrow-return-left"></i> رد استلاف: {{ borrowing.material.name }}</h4>
+    <a href="/borrowings/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="form-card" style="max-width: 600px;">
+    <p class="text-muted small">
+        الكمية: <strong>{{ borrowing.quantity }} {{ borrowing.material.unit.value }}</strong> —
+        كانت مستلَفة لأمر: <strong>{{ borrowing.borrowing_order.order_number }}</strong>
+        {% if borrowing.source_order %} من أمر: <strong>{{ borrowing.source_order.order_number }}</strong>{% endif %}
+    </p>
+    <form method="post" action="/borrowings/{{ borrowing.id }}/return">
+        <div class="mb-3">
+            <label class="form-label">المادة راجعة لـ: <span class="required-star">*</span></label>
+            <select name="destination_type" id="destinationType" class="form-select" required>
+                {% if borrowing.source_order %}
+                <option value="same_source">نفس أمر المصدر ({{ borrowing.source_order.order_number }})</option>
+                {% endif %}
+                <option value="different_order">أمر عمل تاني</option>
+                <option value="general_stock">المخزون العام</option>
+            </select>
+        </div>
+        <div class="mb-3" id="destOrderField" style="display:none;">
+            <label class="form-label">اختر الأمر <span class="required-star">*</span></label>
+            <select name="destination_order_id" id="destOrderSelect" class="form-select">
+                <option value="">اختر...</option>
+                {% for o in orders %}
+                <option value="{{ o.id }}">{{ o.order_number }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> تأكيد الإرجاع</button>
+    </form>
+</div>
+
+<script>
+function updateDestField() {
+    const val = document.getElementById('destinationType').value;
+    const field = document.getElementById('destOrderField');
+    const select = document.getElementById('destOrderSelect');
+    if (val === 'different_order') {
+        field.style.display = 'block';
+        select.required = true;
+    } else {
+        field.style.display = 'none';
+        select.required = false;
+    }
+}
+document.getElementById('destinationType').addEventListener('change', updateDestField);
+updateDestField();
+</script>
+{% endblock %}

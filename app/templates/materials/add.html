@@ -1,0 +1,162 @@
+{% extends "base/layout.html" %}
+{% block title %}إضافة مادة{% endblock %}
+{% block page_title %}إضافة مادة جديدة{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-plus-circle"></i> إضافة مادة جديدة</h4>
+    <a href="/materials/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="form-card" style="max-width: 650px;">
+    {% if error %}
+    <div class="alert alert-danger py-2 small">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/materials/add" enctype="multipart/form-data">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">اسم المادة <span class="required-star">*</span></label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">الفئة <span class="required-star">*</span></label>
+                <select name="category" class="form-select" id="categorySelect" required>
+                    <option value="cable">كابل</option>
+                    <option value="consumable">مستهلك</option>
+                    <option value="tool">عدة</option>
+                    <option value="device">معدة</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">الوصف <span class="required-star">*</span></label>
+                <textarea name="description" class="form-control" rows="2" required></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">وحدة القياس <span class="required-star">*</span></label>
+                <select name="unit" class="form-select" required>
+                    <option value="meters">متر</option>
+                    <option value="units">وحدة</option>
+                    <option value="each">قطعة</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">المخزون الحالي <span class="required-star">*</span></label>
+                <input type="number" step="0.01" name="current_stock" class="form-control" required>
+            </div>
+            <div class="col-md-6" id="holderField" style="display:none;">
+                <label class="form-label">الحامل الحالي (للعدد)</label>
+                <select name="holder_id" class="form-select">
+                    <option value="">— بدون —</option>
+                    {% for s in supervisors %}
+                    <option value="{{ s.id }}">{{ s.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6" id="serialNumberField" style="display:none;">
+                <label class="form-label">الرقم التسلسلي (Serial Number) <span class="required-star">*</span></label>
+                <input type="text" name="serial_number" id="serialNumberInput" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">المورد</label>
+                <select name="supplier_id" class="form-select">
+                    <option value="">— بدون —</option>
+                    {% for sup in suppliers %}
+                    <option value="{{ sup.id }}">{{ sup.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">تاريخ انتهاء الصلاحية/الضمان</label>
+                <input type="date" name="expiry_date" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">صورة المادة (اختياري)</label>
+                <input type="file" name="photo" class="form-control" accept="image/*">
+            </div>
+            <div class="col-12">
+                <div class="form-check">
+                    <input type="checkbox" name="is_general_stock" value="true" class="form-check-input" id="genStock">
+                    <label class="form-check-label" for="genStock">
+                        <strong>مادة ضمن المخزون العام</strong> (مش خاصة بأمر عمل معين — زي الكابلات اللي بتتصرف بالمتر لعدة أوامر)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div id="orderLinkedFields">
+            <hr class="my-3">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">مسجلة على أمر رقم <span class="required-star">*</span></label>
+                    <select name="linked_order_id" id="linkedOrderSelect" class="form-select">
+                        <option value="">اختر الأمر...</option>
+                        {% for o in orders %}
+                        <option value="{{ o.id }}" data-type="{{ o.order_type.value }}">
+                            {{ o.order_number }} ({{ 'أمر شغل' if o.order_type.value == 'work_order' else 'أمر صيانة' }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">لو الأمر مش موجود في القايمة، لازم تعمله الأول من صفحة «الأوامر».</div>
+                </div>
+                <div class="col-md-6" id="gatePassField">
+                    <label class="form-label">رقم الـ Gate Pass <span class="required-star">*</span></label>
+                    <input type="text" name="related_gate_pass_no" id="gatePassInput" class="form-control">
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-4"><i class="bi bi-check-lg"></i> حفظ المادة</button>
+    </form>
+</div>
+
+<script>
+document.getElementById('categorySelect').addEventListener('change', function() {
+    document.getElementById('holderField').style.display = this.value === 'tool' ? 'block' : 'none';
+    const serialField = document.getElementById('serialNumberField');
+    const serialInput = document.getElementById('serialNumberInput');
+    if (this.value === 'device') {
+        serialField.style.display = 'block';
+        serialInput.required = true;
+    } else {
+        serialField.style.display = 'none';
+        serialInput.required = false;
+        serialInput.value = '';
+    }
+});
+
+function updateGatePassField() {
+    const select = document.getElementById('linkedOrderSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    const orderType = selectedOption ? selectedOption.getAttribute('data-type') : null;
+    const gpField = document.getElementById('gatePassField');
+    const gpInput = document.getElementById('gatePassInput');
+    if (orderType === 'work_order') {
+        gpField.style.display = 'block';
+        gpInput.required = true;
+    } else {
+        gpField.style.display = 'none';
+        gpInput.required = false;
+        gpInput.value = '';
+    }
+}
+document.getElementById('linkedOrderSelect').addEventListener('change', updateGatePassField);
+
+function updateGeneralStockToggle() {
+    const isGeneral = document.getElementById('genStock').checked;
+    const orderFields = document.getElementById('orderLinkedFields');
+    const orderSelect = document.getElementById('linkedOrderSelect');
+    if (isGeneral) {
+        orderFields.style.display = 'none';
+        orderSelect.required = false;
+        document.getElementById('gatePassInput').required = false;
+    } else {
+        orderFields.style.display = 'block';
+        orderSelect.required = true;
+        updateGatePassField();
+    }
+}
+document.getElementById('genStock').addEventListener('change', updateGeneralStockToggle);
+updateGeneralStockToggle();
+updateGatePassField();
+</script>
+{% endblock %}

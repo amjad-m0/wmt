@@ -1,0 +1,41 @@
+{% extends "base/layout.html" %}
+{% block title %}إضافة مورد{% endblock %}
+{% block page_title %}إضافة مورد جديد{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-truck"></i> إضافة مورد جديد</h4>
+    <a href="/suppliers/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="form-card" style="max-width: 600px;">
+    {% if error %}
+    <div class="alert alert-danger py-2 small">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/suppliers/add">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">اسم المورد / الشركة <span class="required-star">*</span></label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">الشخص المسؤول <span class="required-star">*</span></label>
+                <input type="text" name="contact_person" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">رقم الهاتف <span class="required-star">*</span></label>
+                <input type="text" name="phone" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">تاريخ توقيع الاتفاق</label>
+                <input type="date" name="agreement_date" class="form-control">
+            </div>
+            <div class="col-12">
+                <label class="form-label">ملاحظات</label>
+                <textarea name="notes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-4"><i class="bi bi-check-lg"></i> حفظ المورد</button>
+    </form>
+</div>
+{% endblock %}

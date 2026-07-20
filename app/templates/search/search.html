@@ -1,0 +1,186 @@
+{% extends "base/layout.html" %}
+{% block title %}البحث في السجلات{% endblock %}
+{% block page_title %}البحث في السجلات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-search"></i> البحث في السجلات</h4>
+</div>
+
+<div class="form-card mb-3">
+    <form method="get" action="/search/">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">كلمة البحث</label>
+                <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="رقم أمر، اسم مادة، سائق...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">نوع العملية</label>
+                <select name="entity_type" class="form-select">
+                    <option value="">الكل</option>
+                    <option value="orders" {% if entity_type == 'orders' %}selected{% endif %}>الأوامر</option>
+                    <option value="materials" {% if entity_type == 'materials' %}selected{% endif %}>المواد</option>
+                    <option value="issuances" {% if entity_type == 'issuances' %}selected{% endif %}>الإصدار</option>
+                    <option value="borrowings" {% if entity_type == 'borrowings' %}selected{% endif %}>الاستلاف</option>
+                    <option value="transfers" {% if entity_type == 'transfers' %}selected{% endif %}>النقل</option>
+                    <option value="returns" {% if entity_type == 'returns' %}selected{% endif %}>المرتجعات</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">المشرف</label>
+                <select name="supervisor_id" class="form-select">
+                    <option value="">الكل</option>
+                    {% for s in supervisors %}
+                    <option value="{{ s.id }}" {% if supervisor_id == s.id %}selected{% endif %}>{{ s.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">من تاريخ</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i></button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if total > 0 %}
+<p class="text-muted small">تم العثور على {{ total }} نتيجة</p>
+
+{% if results.orders %}
+<div class="table-card mb-3">
+    <div class="table-card-header"><h6>أوامر ({{ results.orders|length }})</h6></div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>رقم الأمر</th><th>النوع</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+            <tbody>
+                {% for o in results.orders %}
+                <tr>
+                    <td><a href="/orders/{{ o.id }}">{{ o.order_number }}</a></td>
+                    <td>{{ 'أمر شغل' if o.order_type.value == 'work_order' else 'أمر صيانة' }}</td>
+                    <td>{{ o.status.value }}</td>
+                    <td class="small">{{ o.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if results.materials %}
+<div class="table-card mb-3">
+    <div class="table-card-header"><h6>مواد ({{ results.materials|length }})</h6></div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>الاسم</th><th>الفئة</th><th>المخزون</th></tr></thead>
+            <tbody>
+                {% for m in results.materials %}
+                <tr>
+                    <td><a href="/materials/{{ m.id }}">{{ m.name }}</a></td>
+                    <td>{{ m.category.value }}</td>
+                    <td>{{ m.current_stock }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if results.issuances %}
+<div class="table-card mb-3">
+    <div class="table-card-header"><h6>إصدارات ({{ results.issuances|length }})</h6></div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>الأمر</th><th>المادة</th><th>الكمية</th><th>المشرف</th><th>التاريخ</th></tr></thead>
+            <tbody>
+                {% for i in results.issuances %}
+                <tr>
+                    <td><a href="/orders/{{ i.order.id }}">{{ i.order.order_number }}</a></td>
+                    <td>{{ i.material.name }}</td>
+                    <td>{{ i.quantity }}</td>
+                    <td>{{ i.supervisor.full_name }}</td>
+                    <td class="small">{{ i.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if results.borrowings %}
+<div class="table-card mb-3">
+    <div class="table-card-header"><h6>استلاف ({{ results.borrowings|length }})</h6></div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>المادة</th><th>الكمية</th><th>مشرف الاستلاف</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+            <tbody>
+                {% for b in results.borrowings %}
+                <tr>
+                    <td>{{ b.material.name }}</td>
+                    <td>{{ b.quantity }}</td>
+                    <td>{{ b.borrowing_supervisor.full_name }}</td>
+                    <td>{{ b.status.value }}</td>
+                    <td class="small">{{ b.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if results.transfers %}
+<div class="table-card mb-3">
+    <div class="table-card-header"><h6>نقل داخلي ({{ results.transfers|length }})</h6></div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>المادة</th><th>من</th><th>إلى</th><th>التاريخ</th></tr></thead>
+            <tbody>
+                {% for t in results.transfers %}
+                <tr>
+                    <td>{{ t.material.name }}</td>
+                    <td>{{ t.from_supervisor.full_name }}</td>
+                    <td>{{ t.to_supervisor.full_name }}</td>
+                    <td class="small">{{ t.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if results.returns %}
+<div class="table-card mb-3">
+    <div class="table-card-header"><h6>مرتجعات ({{ results.returns|length }})</h6></div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>الأمر</th><th>المادة</th><th>النوع</th><th>التاريخ</th></tr></thead>
+            <tbody>
+                {% for r in results.returns %}
+                <tr>
+                    <td><a href="/orders/{{ r.order.id }}">{{ r.order.order_number }}</a></td>
+                    <td>{{ r.material.name }}</td>
+                    <td>{{ r.return_classification.value }}</td>
+                    <td class="small">{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% elif q or entity_type or supervisor_id or date_from %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-search fs-1"></i>
+    <p class="mt-2">لا توجد نتائج مطابقة</p>
+</div>
+{% endif %}
+
+{% endblock %}

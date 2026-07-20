@@ -1,0 +1,63 @@
+{% extends "base/layout.html" %}
+{% block title %}{{ material.name }}{% endblock %}
+{% block page_title %}تفاصيل المادة{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-box"></i> {{ material.name }}</h4>
+    <div class="d-flex gap-2">
+        {% if current_user.role.value == 'admin' %}
+        <a href="/materials/{{ material.id }}/edit" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> تعديل</a>
+        <form method="post" action="/materials/{{ material.id }}/delete" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i> حذف</button>
+        </form>
+        {% endif %}
+        <a href="/materials/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="form-card">
+            <table class="table table-borderless">
+                <tr><th width="200">كود الصنف</th><td><strong class="fs-5">{{ material.item_code or '—' }}</strong></td></tr>
+                <tr><th>الوصف</th><td>{{ material.description }}</td></tr>
+                <tr><th>الفئة</th><td>
+                    {% if material.category.value == 'cable' %}كابل
+                    {% elif material.category.value == 'consumable' %}مستهلك
+                    {% elif material.category.value == 'device' %}معدة
+                    {% else %}عدة{% endif %}
+                </td></tr>
+                <tr><th>الوحدة</th><td>
+                    {% if material.unit.value == 'meters' %}متر
+                    {% elif material.unit.value == 'units' %}وحدة
+                    {% else %}قطعة{% endif %}
+                </td></tr>
+                <tr><th>المخزون الحالي</th><td><strong class="fs-5">{{ material.current_stock }}</strong></td></tr>
+                <tr><th>مخزون عام</th><td>{{ 'نعم' if material.is_general_stock else 'لا' }}</td></tr>
+                {% if material.category.value == 'tool' %}
+                <tr><th>الحامل الحالي</th><td>{{ material.holder.full_name if material.holder else '— غير محدد —' }}</td></tr>
+                {% endif %}
+                <tr><th>الرقم التسلسلي (Serial Number)</th><td>{{ material.serial_number or '—' }}</td></tr>
+                <tr><th>الأمر المرتبط</th><td>
+                    {% if material.linked_order %}
+                    <a href="/orders/{{ material.linked_order.id }}">{{ material.linked_order.order_number }}</a>
+                    {% else %}— مخزون عام / بدون ربط —{% endif %}
+                </td></tr>
+                <tr><th>المورد</th><td>{{ material.supplier.name if material.supplier else '—' }}</td></tr>
+                <tr><th>جهة التوريد / بلد المنشأ</th><td>{{ material.supply_source or '—' }}</td></tr>
+                <tr><th>رقم الـ Gate Pass المرتبط</th><td>{{ material.related_gate_pass_no or '—' }}</td></tr>
+                <tr><th>تاريخ انتهاء الصلاحية/الضمان</th><td>{{ material.expiry_date.strftime('%Y-%m-%d') if material.expiry_date else '—' }}</td></tr>
+                <tr><th>تاريخ الإضافة</th><td>{{ material.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-4">
+        {% if material.photo_url %}
+        <div class="form-card p-2">
+            <img src="{{ material.photo_url }}" class="img-fluid rounded" alt="{{ material.name }}">
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

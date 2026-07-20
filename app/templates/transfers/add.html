@@ -1,0 +1,52 @@
+{% extends "base/layout.html" %}
+{% block title %}نقل داخلي جديد{% endblock %}
+{% block page_title %}نقل داخلي جديد{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-shuffle"></i> نقل داخلي جديد</h4>
+    <a href="/transfers/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="form-card" style="max-width: 650px;">
+    {% if error %}
+    <div class="alert alert-danger py-2 small">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/transfers/add">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">المادة <span class="required-star">*</span></label>
+                <select name="material_id" class="form-select" required>
+                    <option value="">اختر...</option>
+                    {% for m in materials %}
+                    <option value="{{ m.id }}">{{ m.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">الكمية <span class="required-star">*</span></label>
+                <input type="number" step="0.01" name="quantity" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">المشرف المسجِّل</label>
+                <input type="text" class="form-control" value="{{ current_user.full_name }}" disabled>
+                <div class="form-text">بيتسجل تلقائي باسم المستخدم اللي مسجل دخول دلوقتي.</div>
+            </div>
+            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <label class="form-label">الموقع الحالي (من) <span class="required-star">*</span></label>
+                <input type="text" name="location_from" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">الموقع الجديد (إلى) <span class="required-star">*</span></label>
+                <input type="text" name="location_to" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label">ملاحظات</label>
+                <textarea name="notes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-4"><i class="bi bi-check-lg"></i> تأكيد النقل</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base/layout.html" %}
+{% block title %}إصدار مواد{% endblock %}
+{% block page_title %}إصدار مواد جديد{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-box-arrow-up"></i> إصدار مواد</h4>
+    <a href="/issuances/" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i> رجوع</a>
+</div>
+
+<div class="form-card" style="max-width: 700px;">
+    {% if error %}
+    <div class="alert alert-danger py-2 small">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/issuances/add" id="issuanceForm">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">الأمر <span class="required-star">*</span></label>
+                <select name="order_id" class="form-select" id="orderSelect" required>
+                    <option value="">اختر...</option>
+                    {% for o in orders %}
+                    <option value="{{ o.id }}">{{ o.order_number }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">المادة <span class="required-star">*</span></label>
+                <select name="material_id" class="form-select" id="materialSelect" required>
+                    <option value="">اختر الأمر الأول...</option>
+                </select>
+                <div class="form-text">هتظهر بس المواد المسجلة على الأمر ده + مواد المخزون العام.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">الكمية <span class="required-star">*</span></label>
+                <input type="number" step="0.01" name="quantity" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">نوع الصرف <span class="required-star">*</span></label>
+                <select name="issuance_type" class="form-select" required>
+                    <option value="network_consumption">استهلاك داخل الشبكة</option>
+                    <option value="personal_custody_temporary">عهدة شخصية مؤقتة</option>
+                    <option value="personal_custody_permanent">عهدة شخصية دائمة</option>
+                    <option value="damaged">تالف</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">المشرف <span class="required-star">*</span></label>
+                <select name="supervisor_id" class="form-select" required>
+                    <option value="">اختر...</option>
+                    {% for s in supervisors %}
+                    <option value="{{ s.id }}">{{ s.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">اسم المستلم <span class="required-star">*</span></label>
+                <input type="text" name="recipient_name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">اسم السائق <span class="required-star">*</span></label>
+                <input type="text" name="driver_name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">رقم الـ Gate Pass <span class="required-star">*</span></label>
+                <input type="text" name="gate_pass_no" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">تاريخ الـ Gate Pass <span class="required-star">*</span></label>
+                <input type="date" name="gate_pass_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">رقم MDR (اختياري)</label>
+                <input type="text" name="mdr_number" class="form-control">
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check">
+                    <input type="checkbox" name="is_from_general_stock" value="true" class="form-check-input" id="genStock">
+                    <label class="form-check-label" for="genStock">من المخزون العام</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">ملاحظات</label>
+                <textarea name="notes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-4"><i class="bi bi-check-lg"></i> تأكيد الإصدار</button>
+    </form>
+</div>
+
+<script>
+// خريطة: كل أمر → مواده المسجلة عليه بس (جاية من السيرفر)
+const orderMaterialsMap = {{ order_materials_json | safe }};
+// مواد المخزون العام: بتظهر دايماً بغض النظر عن الأمر المختار
+const generalStockMaterials = {{ general_stock_json | safe }};
+
+function updateMaterialOptions() {
+    const orderId = document.getElementById('orderSelect').value;
+    const materialSelect = document.getElementById('materialSelect');
+    materialSelect.innerHTML = '';
+
+    if (!orderId) {
+        materialSelect.innerHTML = '<option value="">اختر الأمر الأول...</option>';
+        return;
+    }
+
+    const orderMaterials = orderMaterialsMap[orderId] || [];
+    // ندمج مواد الأمر + المخزون العام من غير تكرار
+    const combined = [...orderMaterials];
+    generalStockMaterials.forEach(function(gm) {
+        if (!combined.some(function(m) { return m.id === gm.id; })) {
+            combined.push(gm);
+        }
+    });
+
+    if (combined.length === 0) {
+        materialSelect.innerHTML = '<option value="">لا توجد مواد مسجلة على هذا الأمر</option>';
+        return;
+    }
+
+    materialSelect.innerHTML = '<option value="">اختر...</option>';
+    combined.forEach(function(m) {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name + ' (' + m.unit + ')';
+        materialSelect.appendChild(opt);
+    });
+}
+
+document.getElementById('orderSelect').addEventListener('change', updateMaterialOptions);
+updateMaterialOptions();
+</script>
+{% endblock %}

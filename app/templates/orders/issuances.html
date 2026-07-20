@@ -1,0 +1,61 @@
+{% extends "base/layout.html" %}
+{% block title %}الإصدار والصرف{% endblock %}
+{% block page_title %}الإصدار والصرف{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-box-arrow-up"></i> الإصدار والصرف</h4>
+    <a href="/issuances/add" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إصدار جديد</a>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>رقم الأمر</th>
+                    <th>المادة</th>
+                    <th>الكمية</th>
+                    <th>نوع الصرف</th>
+                    <th>اسم المستلم</th>
+                    <th>Gate Pass</th>
+                    <th>المشرف</th>
+                    <th>التاريخ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in issuances %}
+                <tr>
+                    <td class="small"><code>{{ i.reference_code or '—' }}</code></td>
+                    <td><a href="/orders/{{ i.order.id }}">{{ i.order.order_number }}</a></td>
+                    <td>{{ i.material.name }}</td>
+                    <td>{{ i.quantity }} {{ i.material.unit.value }}</td>
+                    <td class="small">
+                        {% if i.issuance_type.value == 'network_consumption' %}استهلاك شبكة
+                        {% elif i.issuance_type.value == 'personal_custody_temporary' %}عهدة مؤقتة
+                        {% elif i.issuance_type.value == 'personal_custody_permanent' %}عهدة دائمة
+                        {% else %}تالف{% endif %}
+                    </td>
+                    <td>{{ i.recipient_name or '—' }}</td>
+                    <td class="small">{{ i.gate_pass_no }}</td>
+                    <td>{{ i.supervisor.full_name }}</td>
+                    <td class="small text-muted">{{ i.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="/issuances/{{ i.id }}/receipt" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i></a>
+                        {% if current_user.role.value == 'admin' %}
+                        <form method="post" action="/issuances/{{ i.id }}/delete" class="d-inline" onsubmit="return confirm('حذف السجل؟')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="text-center text-muted py-4">لا توجد عمليات إصدار</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
